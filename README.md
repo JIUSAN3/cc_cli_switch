@@ -66,6 +66,13 @@ eval "$(ccswitch env glm --shell bash)"
 claude
 ```
 
+Persist it into Claude Code user settings so plain `claude` uses the profile every time:
+
+```bash
+ccswitch apply glm
+claude
+```
+
 Or run Claude Code without changing the parent shell:
 
 ```bash
@@ -82,6 +89,8 @@ ccswitch add <name> [--base-url URL] [--api-key KEY] [--secret-ref env:NAME]
 ccswitch list
 ccswitch show <name>
 ccswitch env <name> --shell bash|zsh|sh|fish|powershell|cmd
+ccswitch apply <name>
+ccswitch unapply
 ccswitch use <name> --shell auto
 ccswitch run <name> -- claude
 ccswitch unset --shell bash|zsh|sh|fish|powershell|cmd
@@ -166,6 +175,8 @@ Secrets are stored separately at:
 On Unix-like systems the helper asks Node to create config directories with `0700` and secret files with `0600`. On headless VPS boxes this is the simplest portable default, but it is still plaintext on disk. Do not commit `~/.ccswitch`, paste secrets into issue logs, or pass API keys as command-line flags on shared machines.
 
 If you use `--secret-ref env:NAME`, no key is written by `ccswitch`; the profile only records which environment variable to read at runtime.
+
+`ccswitch apply <name>` writes the rendered environment into `~/.claude/settings.json` under the `env` key, so future `claude` commands use that gateway without `ccswitch run`. It preserves unknown settings and creates a timestamped backup first. Because Claude Code settings store `env` values as plaintext, this also writes the selected API key/token in plaintext.
 
 ## Useful References
 

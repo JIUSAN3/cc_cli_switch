@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
+import { applyClaudeSettings, claudeSettingsPath, unapplyClaudeSettings } from './claude-settings.js';
 import { loadConfig, removeProfile, saveConfig, setProfile, statePaths } from './config.js';
 import { defaultShellTarget, installShellInit, renderShellInit } from './integration.js';
 import { buildEnv, claudeEnvNames, redactProfile, validateProfile } from './profile.js';
@@ -15,6 +16,8 @@ Usage:
   ccswitch list [--json]
   ccswitch show <name> [--json] [--reveal-secret]
   ccswitch env <name> [--shell bash|zsh|sh|fish|powershell|cmd] [--no-secrets]
+  ccswitch apply <name> [--yes]
+  ccswitch unapply [--yes]
   ccswitch use <name> [--shell bash|zsh|sh|fish|powershell|cmd]
   ccswitch run <name> -- <command> [args...]
   ccswitch unset [--shell bash|zsh|sh|fish|powershell|cmd]
@@ -24,8 +27,9 @@ Usage:
   ccswitch doctor [name] [--json] [--probe-models]
 
 Examples:
-  npx claudecode-switch-helper init
-  npx claudecode-switch-helper add glm
+  ccswitch init
+  ccswitch add glm
+  ccswitch apply glm
   eval "$(ccswitch env glm --shell bash)"
   ccswitch run glm -- claude
 `;
@@ -53,6 +57,12 @@ export async function main(argv) {
       return;
     case 'env':
       await commandEnv(args);
+      return;
+    case 'apply':
+      await commandApply(args);
+      return;
+    case 'unapply':
+      await commandUnapply(args);
       return;
     case 'use':
       await commandUse(args);
@@ -221,6 +231,39 @@ async function commandEnv(args) {
   const shell = normalizeShell(args.options.shell || detectShell());
   const env = await envForProfile(name, { includeSecrets: !args.options['no-secrets'] });
   process.stdout.write(renderShellEnv(env, shell));
+}
+
+async function commandApply(args) {
+  const name = requireName(args);
+  const config = await loadConfig();
+  const profile = config.profiles[name];
+  if (!profile) throw userError(`profile "${name}" does not exist`, 'PROFILE_NOT_FOUND');
+
+  if (!args.options.yes && isInteractive()) {
+    const ok = await confirm(`Apply profile "${name}" to ${claudeSettingsPath()}? This writes API credentials into Claude Code settings. [y/N]: `);
+    if (!ok) {
+      printHuman(args, 'Cancelled.');
+      return;
+    }
+  }
+
+  const env = await buildEnv(profile, { includeSecrets: true });
+  const result = await applyClaudeSettings(env);
+  config.active = name;
+  await saveConfig(config);
+  printJsonOrHuman(args, { ok: true, profile: name, ...result }, `Applied profile "${name}" to ${result.file}${result.backup ? ` (backup: ${result.backup})` : ''}`);
+}
+
+async function commandUnapply(args) {
+  if (!args.options.yes && isInteractive()) {
+    const ok = await confirm(`Remove ccswitch Claude Code env values from ${claudeSettingsPath()}? [y/N]: `);
+    if (!ok) {
+      printHuman(args, 'Cancelled.');
+      return;
+    }
+  }
+  const result = await unapplyClaudeSettings();
+  printJsonOrHuman(args, { ok: true, ...result }, `Removed ccswitch env values from ${result.file}${result.backup ? ` (backup: ${result.backup})` : ''}`);
 }
 
 async function commandUse(args) {
@@ -424,6 +467,16 @@ async function askChoice(rl, label, choices, defaultValue) {
 async function askSecretLike(rl, label) {
   if (!rl) throw userError(`missing required value: ${label}`, 'MISSING_REQUIRED_VALUE');
   return askRequired(rl, label);
+}
+
+async function confirm(question) {
+  const rl = createInterface({ input, output });
+  try {
+    const answer = (await rl.question(question)).trim().toLowerCase();
+    return answer === 'y' || answer === 'yes';
+  } finally {
+    rl.close();
+  }
 }
 
 function userError(message, code) {

@@ -34,7 +34,8 @@ After install:
 
 ```bash
 ccswitch add glm
-ccswitch run glm -- claude
+ccswitch apply glm
+claude
 ```
 
 Claude Code refuses `--dangerously-skip-permissions` when running as root. On a VPS, create a normal user for Claude Code if you need that flag.
