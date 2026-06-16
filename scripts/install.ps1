@@ -1,5 +1,5 @@
 param(
-  [string]$Package = $(if ($env:CCSWITCH_PACKAGE) { $env:CCSWITCH_PACKAGE } else { "claudecode-switch-helper@latest" }),
+  [string]$Package = $(if ($env:CCSWITCH_PACKAGE) { $env:CCSWITCH_PACKAGE } else { "https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz" }),
   [string]$NpmPrefix = $(if ($env:CCSWITCH_NPM_PREFIX) { $env:CCSWITCH_NPM_PREFIX } else { Join-Path $HOME ".local\share\ccswitch\npm-global" }),
   [string]$BinDir = $(if ($env:CCSWITCH_BIN_DIR) { $env:CCSWITCH_BIN_DIR } else { Join-Path $HOME ".local\bin" }),
   [string]$NodeHome = $(if ($env:CCSWITCH_NODE_HOME) { $env:CCSWITCH_NODE_HOME } else { Join-Path $HOME ".local\share\ccswitch\node" }),

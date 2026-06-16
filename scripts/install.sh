@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-PACKAGE="${CCSWITCH_PACKAGE:-claudecode-switch-helper@latest}"
+PACKAGE="${CCSWITCH_PACKAGE:-https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz}"
 RUN_INIT="${CCSWITCH_RUN_INIT:-1}"
 INSTALL_SHELL="${CCSWITCH_INSTALL_SHELL:-0}"
 NPM_PREFIX="${CCSWITCH_NPM_PREFIX:-$HOME/.local/share/ccswitch/npm-global}"

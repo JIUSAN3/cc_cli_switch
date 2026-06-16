@@ -6,23 +6,22 @@ The shape is inspired by helpers such as `npx @z_ai/coding-helper`: run the comm
 
 ## Quick Start
 
-After publishing to npm, every VPS can install and start the assistant with:
+Every VPS can install and start the assistant from GitHub with:
 
 ```bash
-npm install -g claudecode-switch-helper
-ccswitch init
+npm install -g https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz && ccswitch init
 ```
 
-Or run it without a permanent install:
+If this package is published to npm later, this shorter command will also work:
 
 ```bash
-npx claudecode-switch-helper init
+npm install -g claudecode-switch-helper && ccswitch init
 ```
 
-If the VPS may not have Node.js yet, use the installer script. Replace the URL with the raw URL for `scripts/install.sh` after you push this repository:
+If the VPS may not have Node.js yet, use the installer script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.sh | sh
 ```
 
 The installer checks for Node.js 18+, installs a portable Node.js under `~/.local/share/ccswitch/node` if needed, installs `ccswitch` into `~/.local/bin`, then starts `ccswitch init`.
@@ -30,13 +29,13 @@ The installer checks for Node.js 18+, installs a portable Node.js under `~/.loca
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/<owner>/<repo>/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.ps1 | iex
 ```
 
 Batch deploy without launching the interactive wizard:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/scripts/install.sh | CCSWITCH_RUN_INIT=0 sh
+curl -fsSL https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.sh | CCSWITCH_RUN_INIT=0 sh
 ```
 
 From this repository during development:
@@ -72,6 +71,8 @@ Or run Claude Code without changing the parent shell:
 ```bash
 ccswitch run glm -- claude
 ```
+
+Claude Code refuses `--dangerously-skip-permissions` when running as root/sudo. On a VPS, create a normal user for Claude Code if you need that flag.
 
 ## Commands
 
