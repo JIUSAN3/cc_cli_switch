@@ -1,13 +1,14 @@
 #!/usr/bin/env sh
 set -eu
 
-PACKAGE="${CCSWITCH_PACKAGE:-https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz}"
+APP_URL="${CCSWITCH_APP_URL:-https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz}"
+APP_DIR="${CCSWITCH_APP_DIR:-$HOME/.local/share/ccswitch/app}"
 RUN_INIT="${CCSWITCH_RUN_INIT:-1}"
 INSTALL_SHELL="${CCSWITCH_INSTALL_SHELL:-0}"
-NPM_PREFIX="${CCSWITCH_NPM_PREFIX:-$HOME/.local/share/ccswitch/npm-global}"
 BIN_DIR="${CCSWITCH_BIN_DIR:-$HOME/.local/bin}"
 NODE_HOME="${CCSWITCH_NODE_HOME:-$HOME/.local/share/ccswitch/node}"
 NODE_VERSION="${CCSWITCH_NODE_VERSION:-lts}"
+GITHUB_PROXY="${CCSWITCH_GITHUB_PROXY:-}"
 
 log() {
   printf '%s\n' "ccswitch-install: $*"
@@ -21,6 +22,9 @@ fail() {
 download() {
   url="$1"
   output="$2"
+  if [ -n "$GITHUB_PROXY" ]; then
+    url="${GITHUB_PROXY%/}/$url"
+  fi
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL "$url" -o "$output"
   elif command -v wget >/dev/null 2>&1; then
@@ -32,7 +36,6 @@ download() {
 
 node_is_usable() {
   command -v node >/dev/null 2>&1 \
-    && command -v npm >/dev/null 2>&1 \
     && node -e "process.exit(Number(process.versions.node.split('.')[0]) >= 18 ? 0 : 1)" >/dev/null 2>&1
 }
 
@@ -43,7 +46,7 @@ detect_node_platform() {
   case "$os" in
     Linux) node_os="linux" ;;
     Darwin) node_os="darwin" ;;
-    *) fail "unsupported OS: $os. Install Node.js 18+ and run npm install -g $PACKAGE" ;;
+    *) fail "unsupported OS: $os. Install Node.js 18+ manually and re-run this installer" ;;
   esac
 
   case "$arch" in
@@ -101,18 +104,32 @@ ensure_node() {
   node_is_usable || fail "Node.js installation failed"
 }
 
-install_package() {
-  mkdir -p "$NPM_PREFIX" "$BIN_DIR"
-  log "installing $PACKAGE"
-  npm install -g --prefix "$NPM_PREFIX" "$PACKAGE"
+install_app() {
+  mkdir -p "$BIN_DIR" "$(dirname "$APP_DIR")"
+  tmp_dir="$(mktemp -d)"
+  archive_path="$tmp_dir/ccswitch.tar.gz"
+  extract_dir="$tmp_dir/extract"
+  mkdir -p "$extract_dir"
+
+  log "downloading ccswitch from $APP_URL"
+  download "$APP_URL" "$archive_path"
+
+  tar -xzf "$archive_path" -C "$extract_dir"
+  src_dir="$(find "$extract_dir" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+  [ -n "$src_dir" ] || fail "downloaded archive did not contain a source directory"
+
+  rm -rf "$APP_DIR.tmp" "$APP_DIR"
+  mkdir -p "$APP_DIR.tmp"
+  cp -R "$src_dir"/. "$APP_DIR.tmp"/
+  mv "$APP_DIR.tmp" "$APP_DIR"
+  rm -rf "$tmp_dir"
 
   node_bin="$(dirname "$(command -v node)")"
-  npm_bin="$NPM_PREFIX/bin"
   wrapper="$BIN_DIR/ccswitch"
   cat > "$wrapper" <<EOF
 #!/usr/bin/env sh
-export PATH="$node_bin:$npm_bin:\$PATH"
-exec "$npm_bin/ccswitch" "\$@"
+export PATH="$node_bin:\$PATH"
+exec node "$APP_DIR/bin/ccswitch.js" "\$@"
 EOF
   chmod +x "$wrapper"
   "$wrapper" --help >/dev/null
@@ -143,6 +160,6 @@ run_init() {
 }
 
 ensure_node
-install_package
+install_app
 install_shell_integration
 run_init

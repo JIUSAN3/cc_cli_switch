@@ -1,15 +1,15 @@
 # Install ccswitch On A VPS
 
-Install from the GitHub repository:
-
-```bash
-npm install -g https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz && ccswitch init
-```
-
-If the VPS does not have Node.js 18+:
+Install on a VPS:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.sh | sh
+```
+
+If GitHub is slow from your region, try a proxy mirror:
+
+```bash
+curl -fsSL https://gh.llkk.cc/https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.sh | CCSWITCH_GITHUB_PROXY=https://gh.llkk.cc sh
 ```
 
 Install without launching the wizard:
@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/
 Install from this Git repository directly with npm and git:
 
 ```bash
-npm install -g git+https://github.com/JIUSAN3/cc_cli_switch.git && ccswitch init
+npm install -g https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz && ccswitch init
 ```
 
 Windows PowerShell:

@@ -9,7 +9,7 @@ The shape is inspired by helpers such as `npx @z_ai/coding-helper`: run the comm
 Every VPS can install and start the assistant from GitHub with:
 
 ```bash
-npm install -g https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz && ccswitch init
+curl -fsSL https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.sh | sh
 ```
 
 If this package is published to npm later, this shorter command will also work:
@@ -18,13 +18,13 @@ If this package is published to npm later, this shorter command will also work:
 npm install -g claudecode-switch-helper && ccswitch init
 ```
 
-If the VPS may not have Node.js yet, use the installer script:
+The installer checks for Node.js 18+, installs a portable Node.js under `~/.local/share/ccswitch/node` if needed, downloads this repository into `~/.local/share/ccswitch/app`, installs `ccswitch` into `~/.local/bin`, then starts `ccswitch init`.
+
+If GitHub is slow from your region, try a proxy mirror:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.sh | sh
+curl -fsSL https://gh.llkk.cc/https://raw.githubusercontent.com/JIUSAN3/cc_cli_switch/main/scripts/install.sh | CCSWITCH_GITHUB_PROXY=https://gh.llkk.cc sh
 ```
-
-The installer checks for Node.js 18+, installs a portable Node.js under `~/.local/share/ccswitch/node` if needed, installs `ccswitch` into `~/.local/bin`, then starts `ccswitch init`.
 
 Windows PowerShell:
 

@@ -1,9 +1,10 @@
 param(
-  [string]$Package = $(if ($env:CCSWITCH_PACKAGE) { $env:CCSWITCH_PACKAGE } else { "https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.tar.gz" }),
-  [string]$NpmPrefix = $(if ($env:CCSWITCH_NPM_PREFIX) { $env:CCSWITCH_NPM_PREFIX } else { Join-Path $HOME ".local\share\ccswitch\npm-global" }),
+  [string]$AppUrl = $(if ($env:CCSWITCH_APP_URL) { $env:CCSWITCH_APP_URL } else { "https://github.com/JIUSAN3/cc_cli_switch/archive/refs/heads/main.zip" }),
+  [string]$AppDir = $(if ($env:CCSWITCH_APP_DIR) { $env:CCSWITCH_APP_DIR } else { Join-Path $HOME ".local\share\ccswitch\app" }),
   [string]$BinDir = $(if ($env:CCSWITCH_BIN_DIR) { $env:CCSWITCH_BIN_DIR } else { Join-Path $HOME ".local\bin" }),
   [string]$NodeHome = $(if ($env:CCSWITCH_NODE_HOME) { $env:CCSWITCH_NODE_HOME } else { Join-Path $HOME ".local\share\ccswitch\node" }),
   [string]$NodeVersion = $(if ($env:CCSWITCH_NODE_VERSION) { $env:CCSWITCH_NODE_VERSION } else { "lts" }),
+  [string]$GithubProxy = $(if ($env:CCSWITCH_GITHUB_PROXY) { $env:CCSWITCH_GITHUB_PROXY } else { "" }),
   [switch]$NoInit,
   [switch]$InstallShell
 )
@@ -17,8 +18,7 @@ function Write-InstallLog {
 
 function Test-NodeUsable {
   $node = Get-Command node -ErrorAction SilentlyContinue
-  $npm = Get-NpmCommand
-  if (-not $node -or -not $npm) {
+  if (-not $node) {
     return $false
   }
 
@@ -26,16 +26,12 @@ function Test-NodeUsable {
   return $LASTEXITCODE -eq 0
 }
 
-function Get-NpmCommand {
-  $cmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
-  if ($cmd) {
-    return $cmd.Source
+function Get-DownloadUrl {
+  param([string]$Url)
+  if ($GithubProxy) {
+    return "$($GithubProxy.TrimEnd('/'))/$Url"
   }
-  $npm = Get-Command npm -ErrorAction SilentlyContinue
-  if ($npm) {
-    return $npm.Source
-  }
-  return $null
+  return $Url
 }
 
 function Resolve-NodePlatform {
@@ -96,26 +92,33 @@ function Ensure-Node {
   }
 }
 
-function Install-Package {
-  New-Item -ItemType Directory -Force -Path $NpmPrefix, $BinDir | Out-Null
-  Write-InstallLog "installing $Package"
-  $npm = Get-NpmCommand
-  if (-not $npm) {
-    throw "npm was not found"
+function Install-App {
+  New-Item -ItemType Directory -Force -Path $BinDir, (Split-Path $AppDir) | Out-Null
+  $tmp = Join-Path ([System.IO.Path]::GetTempPath()) "ccswitch-app-$([Guid]::NewGuid())"
+  $zip = Join-Path $tmp "ccswitch.zip"
+  $extract = Join-Path $tmp "extract"
+
+  Write-InstallLog "downloading ccswitch from $AppUrl"
+  New-Item -ItemType Directory -Force -Path $tmp, $extract | Out-Null
+  Invoke-WebRequest -Uri (Get-DownloadUrl $AppUrl) -OutFile $zip
+  Expand-Archive -LiteralPath $zip -DestinationPath $extract -Force
+  $srcDir = Get-ChildItem -LiteralPath $extract -Directory | Select-Object -First 1
+  if (-not $srcDir) {
+    throw "downloaded archive did not contain a source directory"
   }
-  & $npm install -g --prefix $NpmPrefix $Package
-  if ($LASTEXITCODE -ne 0) {
-    throw "npm install failed"
-  }
+
+  Remove-Item -Recurse -Force $AppDir -ErrorAction SilentlyContinue
+  New-Item -ItemType Directory -Force -Path $AppDir | Out-Null
+  Copy-Item -Recurse -Force -Path (Join-Path $srcDir.FullName "*") -Destination $AppDir
+  Remove-Item -Recurse -Force $tmp
 
   $nodeCommand = Get-Command node
   $nodeBin = Split-Path $nodeCommand.Source
-  $npmBin = $NpmPrefix
   $wrapper = Join-Path $BinDir "ccswitch.cmd"
   $cmd = @"
 @echo off
-set "PATH=$nodeBin;$npmBin;%PATH%"
-"$npmBin\ccswitch.cmd" %*
+set "PATH=$nodeBin;%PATH%"
+node "$AppDir\bin\ccswitch.js" %*
 "@
   Set-Content -LiteralPath $wrapper -Value $cmd -Encoding ASCII
 
@@ -142,6 +145,6 @@ function Start-Init {
 }
 
 Ensure-Node
-Install-Package
+Install-App
 Install-ShellIntegration
 Start-Init
