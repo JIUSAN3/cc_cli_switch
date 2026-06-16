@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "active": "glm",
+  "profiles": {
+    "glm": {
+      "baseUrl": "https://gateway.example.com",
+      "authMode": "bearer",
+      "secretRef": "env:GLM_API_KEY",
+      "model": "sonnet",
+      "models": {
+        "sonnet": "gateway-sonnet",
+        "opus": "gateway-opus",
+        "haiku": "gateway-haiku"
+      },
+      "env": {
+        "API_TIMEOUT_MS": "1200000",
+        "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1",
+        "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION": "gateway-sonnet",
+        "ANTHROPIC_CUSTOM_MODEL_OPTION_NAME": "Gateway Sonnet"
+      }
+    }
+  }
+}

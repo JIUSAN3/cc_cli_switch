@@ -1,0 +1,33 @@
+{
+  "name": "claudecode-switch-helper",
+  "version": "0.1.0",
+  "description": "Interactive CLI helper for switching Claude Code API gateway profiles.",
+  "type": "module",
+  "bin": {
+    "ccswitch": "./bin/ccswitch.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "smoke": "node ./bin/ccswitch.js --help && node --test",
+    "pack:dry": "npm pack --dry-run"
+  },
+  "keywords": [
+    "claude-code",
+    "anthropic",
+    "gateway",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "src",
+    "examples",
+    "scripts",
+    "INSTALL.md",
+    "README.md"
+  ]
+}
